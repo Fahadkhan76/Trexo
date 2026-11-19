@@ -33,6 +33,10 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    optimizeDeps: {
+      // Pre-bundle Recharts' CommonJS peer for named imports in the browser.
+      include: ['react-is'],
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.

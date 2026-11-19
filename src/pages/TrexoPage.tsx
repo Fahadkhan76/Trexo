@@ -20,6 +20,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { RestockRecommendations } from '../components/RestockRecommendations';
 import { getDictionary, getProductDisplayName } from '../i18n';
 import {
   computeForecastSummary,
@@ -123,6 +124,8 @@ export function TrexoPage() {
           </button>
         </div>
       </div>
+
+      <RestockRecommendations />
 
       {/* 3 Summary Cards */}
       <section className="grid grid-cols-3 gap-4" aria-label="Forecast summary">
@@ -246,7 +249,7 @@ export function TrexoPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-lg font-bold text-[#0F172A]">
-              Reorder Recommendations ({forecast.recommendations.length})
+              Local Reorder Recommendations ({forecast.recommendations.length})
             </h3>
             <p className="text-sm text-[#475569]">
               Fast movers and low/out-of-stock staples prioritized first. {dict.demoForecastBadge}.
