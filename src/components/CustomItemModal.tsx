@@ -31,6 +31,7 @@ export function CustomItemModal({
   const suppliers = useMunimStore((s) => s.ledger.suppliers);
   const addProduct = useMunimStore((s) => s.addProduct);
   const addToCart = useMunimStore((s) => s.addToCart);
+  const pushToast = useMunimStore((s) => s.pushToast);
 
   const [name, setName] = useState(initialName);
   const [category, setCategory] = useState<ProductCategory>('Staples & Grains');
@@ -102,7 +103,10 @@ export function CustomItemModal({
     });
 
     if (created.stockQty > 0) {
-      addToCart(created);
+      const result = addToCart(created);
+      if (!result.ok && result.message) {
+        pushToast({ message: result.message, tone: 'warning' });
+      }
     }
     onCreated?.();
     onClose();
@@ -155,7 +159,7 @@ export function CustomItemModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Category
@@ -208,7 +212,7 @@ export function CustomItemModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Selling Price (₹) *
@@ -239,7 +243,7 @@ export function CustomItemModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Opening Stock Qty

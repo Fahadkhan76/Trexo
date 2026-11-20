@@ -27,7 +27,9 @@ import { useMunimStore } from '../store/useMunimStore';
 import type { DiscountType, PaymentMode, Product, ProductCategory } from '../types';
 import {
   calculateCartTotals,
+  findStockIssues,
   formatINR,
+  formatStockIssue,
   MASKED_CURRENCY,
   paiseToRupees,
   rupeesToPaise,
@@ -94,8 +96,10 @@ export function CounterPage() {
   const [partialPayRupees, setPartialPayRupees] = useState('');
   const [listening, setListening] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const cartRef = useRef<HTMLElement>(null);
   const dict = getDictionary(language);
 
   const speechSupported = useMemo(() => {
@@ -141,6 +145,15 @@ export function CounterPage() {
     [cart, overallDiscountType, overallDiscountValue]
   );
 
+  const cartItemCount = useMemo(() => cart.reduce((sum, item) => sum + item.qty, 0), [cart]);
+
+  const scrollToCart = () => {
+    const cartElement = cartRef.current;
+    if (!cartElement) return;
+    cartElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    cartElement.focus({ preventScroll: true });
+  };
+
   const deadBundle = useMemo(() => getDeadStockBundleSuggestion(products), [products]);
 
   const selectedCustomer = useMemo(
@@ -160,6 +173,21 @@ export function CounterPage() {
     }
   }, [paymentMode, cartTotals.totalPaise, setPaymentBreakdown]);
 
+  const handleAddToCart = (product: Product, customUnitPricePaise?: number) => {
+    const result = addToCart(product, customUnitPricePaise);
+    if (!result.ok && result.message) {
+      pushToast({ message: result.message, tone: 'warning' });
+    }
+    return result;
+  };
+
+  const handleQtyChange = (productId: string, nextQty: number) => {
+    const result = updateCartQty(productId, nextQty);
+    if (!result.ok && result.message) {
+      pushToast({ message: result.message, tone: 'warning' });
+    }
+  };
+
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -172,7 +200,7 @@ export function CounterPage() {
         pushToast({ message: `${firstMatch.name} is out of stock`, tone: 'warning' });
         return;
       }
-      addToCart(firstMatch);
+      handleAddToCart(firstMatch);
       setSearchQuery('');
     }
   };
@@ -204,15 +232,25 @@ export function CounterPage() {
     const { deadProduct, companionProduct, savingsPaise } = deadBundle;
     const deadEffective = getEffectiveCounterPricePaise(deadProduct);
     const discountedDeadPrice = Math.max(deadProduct.costPaise, deadEffective - savingsPaise);
-    addToCart(deadProduct, discountedDeadPrice);
-    addToCart(companionProduct);
-    pushToast({
-      message: `Added ${deadProduct.name} + ${companionProduct.name} bundle`,
-      tone: 'success',
-    });
+    const deadResult = handleAddToCart(deadProduct, discountedDeadPrice);
+    const companionResult = handleAddToCart(companionProduct);
+    if (deadResult.ok && companionResult.ok) {
+      pushToast({
+        message: `Added ${deadProduct.name} + ${companionProduct.name} bundle`,
+        tone: 'success',
+      });
+    }
   };
 
   const handleCompleteBill = async () => {
+    if (isSubmitting) return;
+
+    const stockIssues = findStockIssues(cart, products);
+    if (stockIssues.length > 0) {
+      setCheckoutError(stockIssues.map(formatStockIssue).join(' '));
+      return;
+    }
+
     const check = validateCheckout({
       itemCount: cart.length,
       totalPaise: cartTotals.totalPaise,
@@ -225,10 +263,13 @@ export function CounterPage() {
       return;
     }
     setCheckoutError('');
+    setIsSubmitting(true);
     try {
       await completeBill();
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : 'Unable to complete bill');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -245,12 +286,12 @@ export function CounterPage() {
   const splitRemainingPaise = cartTotals.totalPaise - splitSumPaise;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-24 lg:pb-0">
       <HeroStrip />
       <CashActionStrip />
 
       {/* 60% / 40% Counter Split */}
-      <div className="grid grid-cols-[3fr_2fr] gap-4 items-start">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[3fr_2fr]">
         {/* LEFT 60%: Catalog & Search */}
         <section className="min-w-0 space-y-3" aria-label="Product catalog">
           <div className="flex items-center gap-2">
@@ -270,7 +311,7 @@ export function CounterPage() {
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-[#475569] hover:bg-[#F4EFE4]"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-[#475569] hover:bg-[#F4EFE4]"
                     aria-label="Clear search"
                   >
                     <X className="h-4 w-4" />
@@ -280,7 +321,7 @@ export function CounterPage() {
                   <button
                     type="button"
                     onClick={handleStartVoiceSearch}
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${
                       listening
                         ? 'bg-red-100 text-red-700'
                         : 'text-[#475569] hover:bg-[#F4EFE4]'
@@ -427,7 +468,7 @@ export function CounterPage() {
                     key={product.id}
                     type="button"
                     disabled={product.stockQty <= 0}
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                     className={`khata-surface relative flex flex-col justify-between rounded-xl p-3.5 text-left transition-colors min-h-[132px] ${
                       product.stockQty <= 0
                         ? 'opacity-65 cursor-not-allowed bg-[#F4EFE4]'
@@ -480,7 +521,10 @@ export function CounterPage() {
 
         {/* RIGHT 40%: Cart & Checkout */}
         <aside
-          className="khata-surface min-w-0 rounded-xl p-4 space-y-4 sticky top-4"
+          ref={cartRef}
+          id="current-bill"
+          tabIndex={-1}
+          className="khata-surface min-w-0 scroll-mt-4 rounded-xl p-4 space-y-4 outline-none lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
           aria-label="Active bill cart"
         >
           {/* Cart Header & Park Actions */}
@@ -488,7 +532,7 @@ export function CounterPage() {
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-[#0F172A]" />
               <h2 className="text-lg font-bold text-[#0F172A]">
-                Current Bill ({cart.reduce((s, c) => s + c.qty, 0)})
+                Current Bill ({cartItemCount})
               </h2>
             </div>
 
@@ -497,7 +541,7 @@ export function CounterPage() {
                 type="button"
                 disabled={cart.length === 0}
                 onClick={() => parkCurrentBill()}
-                className="flex min-h-[38px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4] disabled:opacity-45 whitespace-nowrap"
+                className="flex min-h-[40px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4] disabled:opacity-45 whitespace-nowrap"
               >
                 <PauseCircle className="h-4 w-4" />
                 <span>{dict.parkBill}</span>
@@ -506,7 +550,7 @@ export function CounterPage() {
                 <button
                   type="button"
                   onClick={clearCart}
-                  className="flex min-h-[38px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 whitespace-nowrap"
+                  className="flex min-h-[40px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-red-700 hover:bg-red-50 whitespace-nowrap"
                 >
                   <Trash2 className="h-4 w-4" />
                   <span>Clear</span>
@@ -570,6 +614,7 @@ export function CounterPage() {
                 const line = cartTotals.lineResults[item.productId];
                 const belowCost = line.unitPriceBelowCost || line.effectiveBelowCost;
                 const matchedProd = products.find((p) => p.id === item.productId);
+                const isAtMaxStock = Boolean(matchedProd && item.qty >= matchedProd.stockQty);
                 const itemDisplayName = matchedProd
                   ? getProductDisplayName(matchedProd, language)
                   : item.name;
@@ -600,7 +645,7 @@ export function CounterPage() {
                       <button
                         type="button"
                         onClick={() => removeFromCart(item.productId)}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#475569] hover:bg-red-50 hover:text-red-700"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#475569] hover:bg-red-50 hover:text-red-700"
                         aria-label={`Remove ${item.name}`}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -609,26 +654,34 @@ export function CounterPage() {
 
                     <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
                       {/* Qty Stepper */}
-                      <div className="flex items-center rounded-lg border border-[#D6CFC0] bg-white">
-                        <button
-                          type="button"
-                          onClick={() => updateCartQty(item.productId, item.qty - 1)}
-                          className="h-10 w-10 text-lg font-bold text-[#0F172A] hover:bg-[#F4EFE4]"
-                          aria-label="Decrease quantity"
-                        >
-                          −
-                        </button>
-                        <span className="w-9 text-center font-mono text-base font-bold tabular-nums">
-                          {item.qty}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => updateCartQty(item.productId, item.qty + 1)}
-                          className="h-10 w-10 text-lg font-bold text-[#0F172A] hover:bg-[#F4EFE4]"
-                          aria-label="Increase quantity"
-                        >
-                          +
-                        </button>
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="flex items-center rounded-lg border border-[#D6CFC0] bg-white">
+                          <button
+                            type="button"
+                            onClick={() => handleQtyChange(item.productId, item.qty - 1)}
+                            className="h-10 w-10 text-lg font-bold text-[#0F172A] hover:bg-[#F4EFE4]"
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+                          <span className="w-9 text-center font-mono text-base font-bold tabular-nums">
+                            {item.qty}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isAtMaxStock}
+                            onClick={() => handleQtyChange(item.productId, item.qty + 1)}
+                            className="h-10 w-10 text-lg font-bold text-[#0F172A] hover:bg-[#F4EFE4] disabled:opacity-40 disabled:cursor-not-allowed"
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+                        {isAtMaxStock && (
+                          <span className="text-[10px] font-semibold text-amber-700">
+                            Max stock
+                          </span>
+                        )}
                       </div>
 
                       {/* Editable Unit Price (₹) */}
@@ -637,14 +690,17 @@ export function CounterPage() {
                         <input
                           type="number"
                           min="0"
-                          step="1"
-                          value={paiseToRupees(item.unitPricePaise)}
-                          onChange={(e) =>
+                          step="0.01"
+                          defaultValue={paiseToRupees(item.unitPricePaise)}
+                          onBlur={(e) =>
                             updateCartUnitPrice(
                               item.productId,
                               rupeesToPaise(Number(e.target.value) || 0)
                             )
                           }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.currentTarget.blur();
+                          }}
                           className="h-10 w-20 rounded-lg border border-[#D6CFC0] bg-white px-2 text-right font-mono text-sm font-semibold text-[#0F172A] tabular-nums"
                         />
                       </label>
@@ -921,12 +977,12 @@ export function CounterPage() {
                         placeholder="Pay ₹"
                         value={partialPayRupees}
                         onChange={(e) => setPartialPayRupees(e.target.value)}
-                        className="h-9 w-24 rounded-lg border border-[#D6CFC0] bg-white px-2 font-mono text-sm tabular-nums"
+                        className="h-10 w-24 rounded-lg border border-[#D6CFC0] bg-white px-2 font-mono text-sm tabular-nums"
                       />
                       <button
                         type="button"
                         onClick={() => void handleRecordPartialPayment()}
-                        className="h-9 rounded-lg bg-emerald-700 px-2.5 text-xs font-semibold text-white hover:bg-emerald-800 whitespace-nowrap"
+                        className="h-10 rounded-lg bg-emerald-700 px-2.5 text-xs font-semibold text-white hover:bg-emerald-800 whitespace-nowrap"
                       >
                         Collect Payment
                       </button>
@@ -945,13 +1001,33 @@ export function CounterPage() {
 
           <button
             type="button"
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || isSubmitting}
             onClick={() => void handleCompleteBill()}
             className="w-full min-h-[48px] rounded-xl bg-emerald-700 px-4 py-3 text-lg font-bold text-white transition-colors hover:bg-emerald-800 disabled:opacity-45 disabled:cursor-not-allowed"
           >
-            {dict.completeBill} · {formatINR(cartTotals.totalPaise)}
+            {isSubmitting ? 'Saving…' : `${dict.completeBill} · ${formatINR(cartTotals.totalPaise)}`}
           </button>
         </aside>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E5DFD3] bg-[#FFFDF8]/95 p-3 shadow-[0_-4px_18px_rgba(15,23,42,0.10)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs font-semibold text-[#475569]">
+              {dict.itemsCount.replace('{count}', String(cartItemCount))}
+            </div>
+            <div className="font-mono text-lg font-bold text-[#0F172A] tabular-nums">
+              {formatINR(cartTotals.totalPaise)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={scrollToCart}
+            className="min-h-[44px] shrink-0 rounded-xl bg-[#0F172A] px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+          >
+            {dict.viewCart}
+          </button>
+        </div>
       </div>
 
       <CustomItemModal open={customModalOpen} onClose={() => setCustomModalOpen(false)} />

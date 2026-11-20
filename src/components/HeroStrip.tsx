@@ -22,7 +22,7 @@ export function HeroStrip() {
   const lostSalesPaise = getEstimatedLostSalesPaise(products);
 
   return (
-    <section className="grid grid-cols-2 gap-4" aria-label="Store cash health summary">
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Store cash health summary">
       {/* Hero 1: Cash trapped in dead stock */}
       <button
         type="button"

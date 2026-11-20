@@ -85,7 +85,11 @@ export interface ICustomerService {
 export interface IForecastService {
   getForecast(horizon: ForecastHorizon): Promise<ForecastSummary>;
   getPurchaseOrders(): Promise<PurchaseOrder[]>;
-  createPurchaseOrder(items: PurchaseOrderItem[]): Promise<PurchaseOrder>;
+  buildPurchaseOrder(
+    items: PurchaseOrderItem[],
+    supplier: { id: string; name: string } | undefined,
+    sequence: number
+  ): Promise<PurchaseOrder>;
 }
 
 export interface IReportsService {

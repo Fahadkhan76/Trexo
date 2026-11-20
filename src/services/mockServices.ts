@@ -12,7 +12,7 @@ import type {
   Supplier,
   SupplierReturnItem,
 } from '../types';
-import { calculateCartTotals, validateCheckout } from '../utils/money';
+import { calculateCartTotals, findStockIssues, formatStockIssue, validateCheckout } from '../utils/money';
 import type {
   CreateSaleInput,
   IBillingService,
@@ -113,6 +113,11 @@ const mockBillingService: IBillingService = {
         discountValue: item.discountValue,
       };
     });
+
+    const stockIssues = findStockIssues(cartItems, ledger.products);
+    if (stockIssues.length > 0) {
+      throw new Error(stockIssues.map(formatStockIssue).join(' '));
+    }
 
     const totals = calculateCartTotals(
       cartItems,
@@ -335,19 +340,25 @@ const mockForecastService: IForecastService = {
     return loadLedger().purchaseOrders;
   },
 
-  async createPurchaseOrder(items: PurchaseOrderItem[]): Promise<PurchaseOrder> {
+  async buildPurchaseOrder(
+    items: PurchaseOrderItem[],
+    supplier: { id: string; name: string } | undefined,
+    sequence: number
+  ): Promise<PurchaseOrder> {
     const ledger = loadLedger();
-    const po: PurchaseOrder = {
+    const supplierRecord = supplier
+      ? ledger.suppliers.find((s) => s.id === supplier.id)
+      : undefined;
+    return {
       id: nextId('po'),
-      poNumber: `PO-${201 + ledger.purchaseOrders.length}`,
+      poNumber: `PO-${201 + sequence}`,
       createdAt: new Date().toISOString(),
       status: 'ordered',
+      supplierId: supplier?.id,
+      supplierName: supplier?.name ?? supplierRecord?.name,
       items,
       totalCostPaise: items.reduce((s, i) => s + i.totalCostPaise, 0),
     };
-    ledger.purchaseOrders = [po, ...ledger.purchaseOrders];
-    saveLedger(ledger);
-    return po;
   },
 };
 

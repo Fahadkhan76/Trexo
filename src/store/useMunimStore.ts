@@ -1,8 +1,10 @@
 import { create } from 'zustand';
+import { APP_CONFIG } from '../config';
 import { getEffectiveCounterPricePaise } from '../selectors/ledgerSelectors';
 import { services } from '../services';
 import type { CreateSaleInput, ProductInput } from '../services/interfaces';
-import { loadLedger } from '../services/storage';
+import { loadLedger, saveLedger } from '../services/storage';
+import { calculateCartTotals } from '../utils/money';
 import type {
   CartItem,
   Customer,
@@ -13,6 +15,7 @@ import type {
   PaymentBreakdown,
   PaymentMode,
   Product,
+  PurchaseOrder,
   PurchaseOrderItem,
   Sale,
   SupplierReturnItem,
@@ -27,6 +30,11 @@ export interface ToastMessage {
 }
 
 export type ActiveDrawer = 'rescue' | 'supplier_due' | 'low_stock' | 'purchase_order' | null;
+
+export interface CartActionResult {
+  ok: boolean;
+  message?: string;
+}
 
 interface MunimStore {
   ledger: LedgerState;
@@ -59,8 +67,8 @@ interface MunimStore {
   clearLastSale: () => void;
 
   // Cart actions
-  addToCart: (product: Product, customUnitPricePaise?: number) => void;
-  updateCartQty: (productId: string, qty: number) => void;
+  addToCart: (product: Product, customUnitPricePaise?: number) => CartActionResult;
+  updateCartQty: (productId: string, qty: number) => CartActionResult;
   updateCartUnitPrice: (productId: string, unitPricePaise: number) => void;
   updateCartItemDiscount: (productId: string, discountType: DiscountType, discountValue: number) => void;
   removeFromCart: (productId: string) => void;
@@ -86,6 +94,7 @@ interface MunimStore {
     reason: SupplierReturnItem['reason'];
   }) => Promise<SupplierReturnItem>;
   markReturnSlipGenerated: (returnIds: string[]) => Promise<void>;
+  clearReturnedItem: (returnId: string) => Promise<void>;
   addCustomer: (input: { name: string; phone: string; village?: string; notes?: string }) => Promise<Customer>;
   recordCustomerPayment: (customerId: string, amountPaise: number) => Promise<Customer>;
   addToPoDraft: (product: Product, qty: number) => void;
@@ -96,6 +105,11 @@ interface MunimStore {
 }
 
 const initialLedger = loadLedger();
+let completingBill = false;
+
+function stockLimitMessage(name: string, available: number): string {
+  return available <= 0 ? `${name} is out of stock` : `Only ${available} of ${name} in stock`;
+}
 
 export const useMunimStore = create<MunimStore>((set, get) => ({
   ledger: initialLedger,
@@ -111,10 +125,10 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
   paymentMode: 'cash',
   paymentBreakdown: { cashPaise: 0, upiPaise: 0, creditPaise: 0 },
   selectedCustomerId: undefined,
-  parkedBills: [],
+  parkedBills: initialLedger.parkedBills ?? [],
   lastCompletedSale: null,
 
-  poDraft: [],
+  poDraft: initialLedger.poDraft ?? [],
 
   setLanguage: (language) => set({ language }),
   togglePrivacy: () => set((s) => ({ privacyHidden: !s.privacyHidden })),
@@ -133,10 +147,17 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
   clearLastSale: () => set({ lastCompletedSale: null }),
 
   addToCart: (product, customUnitPricePaise) => {
+    const existing = get().cart.find((c) => c.productId === product.id);
+    const available = Math.max(0, Math.round(product.stockQty));
+    const nextQty = (existing?.qty ?? 0) + 1;
+    if (nextQty > available) {
+      return { ok: false, message: stockLimitMessage(product.name, available) };
+    }
+
     const effectivePrice = customUnitPricePaise ?? getEffectiveCounterPricePaise(product);
     set((state) => {
-      const existing = state.cart.find((c) => c.productId === product.id);
-      if (existing) {
+      const current = state.cart.find((c) => c.productId === product.id);
+      if (current) {
         return {
           cart: state.cart.map((c) =>
             c.productId === product.id
@@ -164,16 +185,32 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
       };
       return { cart: [...state.cart, nextItem] };
     });
+    return { ok: true };
   },
 
   updateCartQty: (productId, qty) => {
+    if (!Number.isFinite(qty)) return { ok: false };
     if (qty <= 0) {
       get().removeFromCart(productId);
-      return;
+      return { ok: true };
     }
+
+    const wanted = Math.round(qty);
+    const product = get().ledger.products.find((p) => p.id === productId);
+    if (product) {
+      const available = Math.max(0, Math.round(product.stockQty));
+      if (wanted > available) {
+        set((s) => ({
+          cart: s.cart.map((c) => (c.productId === productId ? { ...c, qty: available } : c)),
+        }));
+        return { ok: false, message: stockLimitMessage(product.name, available) };
+      }
+    }
+
     set((s) => ({
-      cart: s.cart.map((c) => (c.productId === productId ? { ...c, qty: Math.round(qty) } : c)),
+      cart: s.cart.map((c) => (c.productId === productId ? { ...c, qty: wanted } : c)),
     }));
+    return { ok: true };
   },
 
   updateCartUnitPrice: (productId, unitPricePaise) => {
@@ -188,11 +225,15 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
 
   updateCartItemDiscount: (productId, discountType, discountValue) => {
     set((s) => ({
-      cart: s.cart.map((c) =>
-        c.productId === productId
-          ? { ...c, discountType, discountValue: Math.max(0, discountValue) }
-          : c
-      ),
+      cart: s.cart.map((c) => {
+        if (c.productId !== productId) return c;
+        const safe = Number.isFinite(discountValue) ? Math.max(0, discountValue) : 0;
+        const clamped =
+          discountType === 'percent'
+            ? Math.min(100, safe)
+            : Math.min(Math.round(safe), c.unitPricePaise * c.qty);
+        return { ...c, discountType, discountValue: clamped };
+      }),
     }));
   },
 
@@ -201,7 +242,15 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
   },
 
   setOverallDiscount: (overallDiscountType, overallDiscountValue) => {
-    set({ overallDiscountType, overallDiscountValue: Math.max(0, overallDiscountValue) });
+    const safe = Number.isFinite(overallDiscountValue) ? Math.max(0, overallDiscountValue) : 0;
+    let clamped = safe;
+    if (overallDiscountType === 'percent') {
+      clamped = Math.min(100, safe);
+    } else {
+      const totals = calculateCartTotals(get().cart, 'flat', 0);
+      clamped = Math.min(Math.round(safe), totals.subtotalAfterItemDiscountsPaise);
+    }
+    set({ overallDiscountType, overallDiscountValue: clamped });
   },
 
   setPaymentMode: (paymentMode) => set({ paymentMode }),
@@ -230,8 +279,12 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
       overallDiscountValue: s.overallDiscountValue,
       customerId: s.selectedCustomerId,
     };
+    const parkedBills = [parked, ...s.parkedBills];
+    const ledger = { ...s.ledger, parkedBills };
+    saveLedger(ledger);
     set({
-      parkedBills: [parked, ...s.parkedBills],
+      ledger,
+      parkedBills,
       cart: [],
       overallDiscountType: 'flat',
       overallDiscountValue: 0,
@@ -261,7 +314,10 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
       });
     }
 
+    const ledger = { ...s.ledger, parkedBills: nextParked };
+    saveLedger(ledger);
     set({
+      ledger,
       parkedBills: nextParked,
       cart: target.items,
       overallDiscountType: target.overallDiscountType,
@@ -271,39 +327,49 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
   },
 
   deleteParkedBill: (parkedId) => {
-    set((s) => ({ parkedBills: s.parkedBills.filter((b) => b.id !== parkedId) }));
+    const s = get();
+    const parkedBills = s.parkedBills.filter((b) => b.id !== parkedId);
+    const ledger = { ...s.ledger, parkedBills };
+    saveLedger(ledger);
+    set({ ledger, parkedBills });
   },
 
   completeBill: async () => {
-    const s = get();
-    const payload: CreateSaleInput = {
-      items: s.cart.map((c) => ({
-        productId: c.productId,
-        qty: c.qty,
-        unitPricePaise: c.unitPricePaise,
-        discountType: c.discountType,
-        discountValue: c.discountValue,
-      })),
-      overallDiscountType: s.overallDiscountType,
-      overallDiscountValue: s.overallDiscountValue,
-      paymentMode: s.paymentMode,
-      payment: s.paymentBreakdown,
-      customerId: s.selectedCustomerId,
-    };
+    if (completingBill) throw new Error('A bill is already being completed.');
+    completingBill = true;
+    try {
+      const s = get();
+      const payload: CreateSaleInput = {
+        items: s.cart.map((c) => ({
+          productId: c.productId,
+          qty: c.qty,
+          unitPricePaise: c.unitPricePaise,
+          discountType: c.discountType,
+          discountValue: c.discountValue,
+        })),
+        overallDiscountType: s.overallDiscountType,
+        overallDiscountValue: s.overallDiscountValue,
+        paymentMode: s.paymentMode,
+        payment: s.paymentBreakdown,
+        customerId: s.selectedCustomerId,
+      };
 
-    const { sale, ledger } = await services.billing.completeSale(payload);
-    set({
-      ledger,
-      lastCompletedSale: sale,
-      cart: [],
-      overallDiscountType: 'flat',
-      overallDiscountValue: 0,
-      paymentMode: 'cash',
-      paymentBreakdown: { cashPaise: 0, upiPaise: 0, creditPaise: 0 },
-      selectedCustomerId: undefined,
-    });
-    s.pushToast({ message: `Bill ${sale.billNumber} completed`, tone: 'success' });
-    return sale;
+      const { sale, ledger } = await services.billing.completeSale(payload);
+      set({
+        ledger,
+        lastCompletedSale: sale,
+        cart: [],
+        overallDiscountType: 'flat',
+        overallDiscountValue: 0,
+        paymentMode: 'cash',
+        paymentBreakdown: { cashPaise: 0, upiPaise: 0, creditPaise: 0 },
+        selectedCustomerId: undefined,
+      });
+      s.pushToast({ message: `Bill ${sale.billNumber} completed`, tone: 'success' });
+      return sale;
+    } finally {
+      completingBill = false;
+    }
   },
 
   addProduct: async (input) => {
@@ -397,6 +463,14 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
     get().pushToast({ message: 'Supplier return slip marked generated', tone: 'success' });
   },
 
+  clearReturnedItem: async (returnId) => {
+    const supplierReturns = await services.suppliers.clearReturnedItem(returnId);
+    set((s) => ({
+      ledger: { ...s.ledger, supplierReturns },
+    }));
+    get().pushToast({ message: 'Supplier return marked as completed', tone: 'success' });
+  },
+
   addCustomer: async (input) => {
     const customer = await services.customers.create(input);
     set((s) => ({
@@ -421,61 +495,99 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
 
   addToPoDraft: (product, qty) => {
     const safeQty = Math.max(1, Math.round(qty));
-    set((s) => {
-      const existing = s.poDraft.find((i) => i.productId === product.id);
-      if (existing) {
-        const nextQty = existing.qty + safeQty;
-        return {
-          poDraft: s.poDraft.map((i) =>
-            i.productId === product.id
-              ? { ...i, qty: nextQty, totalCostPaise: nextQty * i.unitCostPaise }
-              : i
-          ),
-        };
-      }
-      const next: PurchaseOrderItem = {
-        productId: product.id,
-        sku: product.sku,
-        productName: product.name,
-        emoji: product.emoji,
-        supplierId: product.supplierId,
-        qty: safeQty,
-        unitCostPaise: product.costPaise,
-        totalCostPaise: safeQty * product.costPaise,
-      };
-      return { poDraft: [...s.poDraft, next] };
-    });
-    get().pushToast({ message: `Added ${product.name} (${safeQty}) to Purchase Order`, tone: 'success' });
+    const s = get();
+    const existing = s.poDraft.find((i) => i.productId === product.id);
+    const poDraft = existing
+      ? s.poDraft.map((i) =>
+          i.productId === product.id
+            ? { ...i, qty: i.qty + safeQty, totalCostPaise: (i.qty + safeQty) * i.unitCostPaise }
+            : i
+        )
+      : [
+          ...s.poDraft,
+          {
+            productId: product.id,
+            sku: product.sku,
+            productName: product.name,
+            emoji: product.emoji,
+            supplierId: product.supplierId,
+            qty: safeQty,
+            unitCostPaise: product.costPaise,
+            totalCostPaise: safeQty * product.costPaise,
+          },
+        ];
+    const ledger = { ...s.ledger, poDraft };
+    saveLedger(ledger);
+    set({ ledger, poDraft });
+    s.pushToast({ message: `Added ${product.name} (${safeQty}) to Purchase Order`, tone: 'success' });
   },
 
   updatePoDraftQty: (productId, qty) => {
-    if (qty <= 0) {
+    if (!Number.isFinite(qty) || qty <= 0) {
       get().removeFromPoDraft(productId);
       return;
     }
-    set((s) => ({
-      poDraft: s.poDraft.map((i) =>
-        i.productId === productId
-          ? { ...i, qty: Math.round(qty), totalCostPaise: Math.round(qty) * i.unitCostPaise }
-          : i
-      ),
-    }));
+    const s = get();
+    const safeQty = Math.max(1, Math.round(qty));
+    const poDraft = s.poDraft.map((i) =>
+      i.productId === productId
+        ? { ...i, qty: safeQty, totalCostPaise: safeQty * i.unitCostPaise }
+        : i
+    );
+    const ledger = { ...s.ledger, poDraft };
+    saveLedger(ledger);
+    set({ ledger, poDraft });
   },
 
   removeFromPoDraft: (productId) => {
-    set((s) => ({ poDraft: s.poDraft.filter((i) => i.productId !== productId) }));
+    const s = get();
+    const poDraft = s.poDraft.filter((i) => i.productId !== productId);
+    const ledger = { ...s.ledger, poDraft };
+    saveLedger(ledger);
+    set({ ledger, poDraft });
   },
 
   submitPurchaseOrder: async () => {
     const s = get();
     if (s.poDraft.length === 0) return;
-    const po = await services.forecast.createPurchaseOrder(s.poDraft);
-    set((state) => ({
-      ledger: { ...state.ledger, purchaseOrders: [po, ...state.ledger.purchaseOrders] },
+
+    const groups = new Map<string, PurchaseOrderItem[]>();
+    for (const item of s.poDraft) {
+      const existing = groups.get(item.supplierId) ?? [];
+      groups.set(item.supplierId, [...existing, item]);
+    }
+
+    const created: PurchaseOrder[] = [];
+    const groupEntries = Array.from(groups.entries());
+    for (let index = 0; index < groupEntries.length; index += 1) {
+      const [supplierId, items] = groupEntries[index];
+      const supplier = s.ledger.suppliers.find((sup) => sup.id === supplierId);
+      const po = await services.forecast.buildPurchaseOrder(
+        items,
+        supplier ? { id: supplier.id, name: supplier.name } : undefined,
+        s.ledger.purchaseOrders.length + index
+      );
+      created.push(po);
+    }
+
+    const ledger = {
+      ...s.ledger,
+      purchaseOrders: [...created, ...s.ledger.purchaseOrders],
+      poDraft: [],
+    };
+    saveLedger(ledger);
+    set({
+      ledger,
       poDraft: [],
       activeDrawer: null,
-    }));
-    s.pushToast({ message: `Purchase Order ${po.poNumber} saved`, tone: 'success' });
+    });
+    s.pushToast({
+      message:
+        created.length === 1
+          ? `Purchase Order ${created[0].poNumber} saved`
+          : `${created.length} Purchase Orders saved`,
+      tone: 'success',
+    });
   },
 
   resetDemoData: async () => {
@@ -483,8 +595,8 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
     set({
       ledger: fresh,
       cart: [],
-      parkedBills: [],
-      poDraft: [],
+      parkedBills: fresh.parkedBills ?? [],
+      poDraft: fresh.poDraft ?? [],
       overallDiscountType: 'flat',
       overallDiscountValue: 0,
       paymentMode: 'cash',
@@ -496,3 +608,15 @@ export const useMunimStore = create<MunimStore>((set, get) => ({
     get().pushToast({ message: 'Demo data restored to starting scenario', tone: 'info' });
   },
 }));
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== APP_CONFIG.STORAGE_KEY) return;
+    const ledger = loadLedger();
+    useMunimStore.setState({
+      ledger,
+      parkedBills: ledger.parkedBills ?? [],
+      poDraft: ledger.poDraft ?? [],
+    });
+  });
+}

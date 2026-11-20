@@ -58,9 +58,9 @@ export function AppShell({ children }: AppShellProps) {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#FAF7F0] text-[#0F172A]">
+    <div className="flex min-h-screen flex-col bg-[#FAF7F0] text-[#0F172A] lg:flex-row">
       {/* Slim Left Sidebar */}
-      <aside className="no-print flex w-48 xl:w-56 shrink-0 flex-col justify-between border-r border-[#E5DFD3] bg-[#FFFDF8] p-4">
+      <aside className="no-print flex w-full shrink-0 flex-col justify-between border-b border-[#E5DFD3] bg-[#FFFDF8] p-3 lg:sticky lg:top-0 lg:h-screen lg:w-48 lg:border-b-0 lg:border-r lg:p-4 xl:w-56">
         <div>
           <div className="flex items-center gap-2.5 px-1 pb-4 pt-1 border-b border-[#E5DFD3]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0F172A] text-[#FAF7F0]">
@@ -76,7 +76,7 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           </div>
 
-          <nav className="mt-5 flex flex-col gap-1.5" aria-label="Main navigation">
+          <nav className="mt-5 flex flex-row gap-1.5 overflow-x-auto lg:flex-col" aria-label="Main navigation">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -85,7 +85,7 @@ export function AppShell({ children }: AppShellProps) {
                   to={item.to}
                   end={item.to === '/'}
                   className={({ isActive }) =>
-                    `flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors whitespace-nowrap ${
+                    `flex min-h-[44px] flex-1 items-center justify-center gap-3 rounded-lg px-3 py-2 text-base font-semibold transition-colors whitespace-nowrap lg:flex-none lg:justify-start ${
                       isActive
                         ? 'bg-[#0F172A] text-[#FAF7F0]'
                         : 'text-[#0F172A] hover:bg-[#F4EFE4]'
@@ -100,7 +100,7 @@ export function AppShell({ children }: AppShellProps) {
           </nav>
         </div>
 
-        <div className="rounded-lg bg-[#F4EFE4] border border-[#E5DFD3] p-3 text-sm text-[#475569]">
+        <div className="hidden rounded-lg bg-[#F4EFE4] border border-[#E5DFD3] p-3 text-sm text-[#475569] lg:block">
           <p className="font-medium text-[#0F172A]">Device Storage</p>
           <p className="mt-1 text-xs leading-snug">{dict.connectivityNote}</p>
         </div>
@@ -109,7 +109,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Main Content Area */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Header */}
-        <header className="no-print flex flex-wrap items-center justify-between gap-3 border-b border-[#E5DFD3] bg-[#FFFDF8] px-5 py-3">
+        <header className="no-print flex flex-wrap items-center justify-between gap-3 border-b border-[#E5DFD3] bg-[#FFFDF8] px-3 py-3 sm:px-5">
           <div className="flex items-center gap-4 min-w-0">
             <div className="min-w-0">
               <h1 className="text-lg font-bold tracking-tight text-[#0F172A] truncate">
@@ -147,7 +147,7 @@ export function AppShell({ children }: AppShellProps) {
                   key={opt.code}
                   type="button"
                   onClick={() => setLanguage(opt.code)}
-                  className={`min-h-[36px] rounded-md px-2.5 py-1 text-sm font-semibold transition-colors whitespace-nowrap ${
+                  className={`min-h-[40px] rounded-md px-2.5 py-1 text-sm font-semibold transition-colors whitespace-nowrap ${
                     language === opt.code
                       ? 'bg-[#0F172A] text-white'
                       : 'text-[#475569] hover:text-[#0F172A]'
@@ -168,12 +168,13 @@ export function AppShell({ children }: AppShellProps) {
                   : 'border-[#D6CFC0] bg-white text-[#0F172A] hover:bg-[#F4EFE4]'
               }`}
               title={privacyHidden ? dict.privacyShow : dict.privacyHide}
+              aria-label={privacyHidden ? dict.privacyShow : dict.privacyHide}
             >
               {privacyHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span>{privacyHidden ? dict.privacyShow : dict.privacyHide}</span>
+              <span className="hidden sm:inline">{privacyHidden ? dict.privacyShow : dict.privacyHide}</span>
             </button>
 
-            <span className="text-sm font-medium text-[#475569] px-1 whitespace-nowrap">
+            <span className="hidden text-sm font-medium text-[#475569] px-1 whitespace-nowrap sm:inline">
               {dict.demoDataBadge}
             </span>
 
@@ -181,14 +182,16 @@ export function AppShell({ children }: AppShellProps) {
               type="button"
               onClick={() => setConfirmResetOpen(true)}
               className="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[#D6CFC0] bg-white px-3 py-1.5 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4] whitespace-nowrap"
+              aria-label={dict.resetDemoData}
+              title={dict.resetDemoData}
             >
               <RotateCcw className="h-4 w-4" />
-              <span>{dict.resetDemoData}</span>
+              <span className="hidden sm:inline">{dict.resetDemoData}</span>
             </button>
           </div>
         </header>
 
-        <main className="flex-1 p-5 min-w-0">{children}</main>
+        <main className="flex-1 p-3 min-w-0 sm:p-5">{children}</main>
       </div>
 
       <ConfirmDialog

@@ -33,6 +33,18 @@ export function ReceiptModal({ sale, onClose }: ReceiptModalProps) {
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [sale, onClose]);
 
+  useEffect(() => {
+    if (!sale) return;
+    let style = document.getElementById('print-page-size') as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'print-page-size';
+      document.head.appendChild(style);
+    }
+    style.textContent = `@media print { @page { size: ${paperSize} portrait; margin: 12mm; } }`;
+    return () => style?.remove();
+  }, [sale, paperSize]);
+
   if (!sale) return null;
 
   return (
@@ -50,20 +62,20 @@ export function ReceiptModal({ sale, onClose }: ReceiptModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Screen-only toolbar */}
-        <div className="no-print flex items-center justify-between gap-3 border-b border-[#E5DFD3] bg-[#FAF7F0] px-5 py-3 rounded-t-xl">
+        <div className="no-print flex flex-wrap items-center justify-between gap-3 border-b border-[#E5DFD3] bg-[#FAF7F0] px-5 py-3 rounded-t-xl">
           <div className="flex items-center gap-2 text-emerald-800 font-semibold text-base">
             <CheckCircle2 className="h-5 w-5" />
             <span id="receipt-modal-title">Bill {sale.billNumber} Completed</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center rounded-lg border border-[#D6CFC0] bg-white p-0.5">
               {(['A5', 'A4'] as const).map((sz) => (
                 <button
                   key={sz}
                   type="button"
                   onClick={() => setPaperSize(sz)}
-                  className={`min-h-[34px] rounded-md px-3 text-sm font-semibold ${
+                  className={`min-h-[40px] rounded-md px-3 text-sm font-semibold ${
                     paperSize === sz ? 'bg-[#0F172A] text-white' : 'text-[#475569]'
                   }`}
                 >
@@ -79,7 +91,7 @@ export function ReceiptModal({ sale, onClose }: ReceiptModalProps) {
               className="flex min-h-[40px] items-center gap-2 rounded-lg bg-[#0F172A] px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
             >
               <Printer className="h-4 w-4" />
-              <span>{dict.printReceipt}</span>
+              <span className="hidden sm:inline">{dict.printReceipt}</span>
             </button>
 
             <button

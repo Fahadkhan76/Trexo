@@ -21,7 +21,7 @@ import {
   getTrappedCapitalPaise,
 } from '../selectors/ledgerSelectors';
 import { useMunimStore } from '../store/useMunimStore';
-import type { Product } from '../types';
+import type { Product, SupplierReturnItem } from '../types';
 import { formatShortDate } from '../utils/dates';
 import { formatINR, MASKED_CURRENCY, paiseToRupees, rupeesToPaise } from '../utils/money';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -36,6 +36,7 @@ export function ActionDrawers() {
   const applyCounterDiscount = useMunimStore((s) => s.applyCounterDiscount);
   const returnToSupplier = useMunimStore((s) => s.returnToSupplier);
   const markReturnSlipGenerated = useMunimStore((s) => s.markReturnSlipGenerated);
+  const clearReturnedItem = useMunimStore((s) => s.clearReturnedItem);
   const poDraft = useMunimStore((s) => s.poDraft);
   const updatePoDraftQty = useMunimStore((s) => s.updatePoDraftQty);
   const removeFromPoDraft = useMunimStore((s) => s.removeFromPoDraft);
@@ -44,12 +45,33 @@ export function ActionDrawers() {
 
   const [customDiscounts, setCustomDiscounts] = useState<Record<string, string>>({});
   const [returnTarget, setReturnTarget] = useState<Product | null>(null);
+  const [clearReturnTarget, setClearReturnTarget] = useState<SupplierReturnItem | null>(null);
   const [showSlipPreview, setShowSlipPreview] = useState(false);
 
   const dict = getDictionary(language);
   const deadItems = useMemo(() => getDeadStockItems(ledger.products), [ledger.products]);
   const lowOrOos = useMemo(() => getLowAndOutOfStockItems(ledger.products), [ledger.products]);
   const supSummary = useMemo(() => getSupplierReturnsSummary(ledger), [ledger]);
+  const poGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      { supplierId: string; supplierName: string; items: typeof poDraft; subtotalPaise: number }
+    >();
+    for (const item of poDraft) {
+      const supplier = ledger.suppliers.find((sup) => sup.id === item.supplierId);
+      const supplierName = supplier?.name ?? 'Wholesale Supplier';
+      const group = groups.get(item.supplierId) ?? {
+        supplierId: item.supplierId,
+        supplierName,
+        items: [],
+        subtotalPaise: 0,
+      };
+      group.items.push(item);
+      group.subtotalPaise += item.totalCostPaise;
+      groups.set(item.supplierId, group);
+    }
+    return Array.from(groups.values());
+  }, [poDraft, ledger.suppliers]);
 
   if (!activeDrawer) return null;
 
@@ -77,6 +99,17 @@ export function ActionDrawers() {
   };
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(buildReorderMessage())}`;
+
+  const buildPoMessage = () =>
+    `Purchase Order — ${APP_CONFIG.STORE_NAME}\n${poGroups
+      .map(
+        (group) =>
+          `${group.supplierName}:\n${group.items
+            .map((item) => `• ${item.productName} × ${item.qty}`)
+            .join('\n')}`
+      )
+      .join('\n\n')}`;
+  const poWhatsappUrl = `https://wa.me/?text=${encodeURIComponent(buildPoMessage())}`;
 
   return (
     <>
@@ -186,14 +219,14 @@ export function ActionDrawers() {
                               <button
                                 type="button"
                                 onClick={() => void applyCounterDiscount(product.id, tenOff)}
-                                className="min-h-[38px] rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4]"
+                                className="min-h-[40px] rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4]"
                               >
                                 10% off ({formatINR(tenOff)})
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void applyCounterDiscount(product.id, twentyOff)}
-                                className="min-h-[38px] rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4]"
+                                className="min-h-[40px] rounded-lg border border-[#D6CFC0] bg-white px-2.5 py-1 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4]"
                               >
                                 20% off ({formatINR(twentyOff)})
                               </button>
@@ -219,7 +252,7 @@ export function ActionDrawers() {
                                       void applyCounterDiscount(product.id, rupeesToPaise(val));
                                     }
                                   }}
-                                  className="flex min-h-[38px] items-center gap-1 rounded-lg bg-[#0F172A] px-3 py-1 text-sm font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
+                                  className="flex min-h-[40px] items-center gap-1 rounded-lg bg-[#0F172A] px-3 py-1 text-sm font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
                                 >
                                   <Tag className="h-3.5 w-3.5" />
                                   <span>{dict.applyCounterDiscount}</span>
@@ -230,7 +263,7 @@ export function ActionDrawers() {
                             <button
                               type="button"
                               onClick={() => setReturnTarget(product)}
-                              className="flex min-h-[38px] items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-3 py-1 text-sm font-semibold text-red-800 hover:bg-red-100 whitespace-nowrap"
+                              className="flex min-h-[40px] items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-3 py-1 text-sm font-semibold text-red-800 hover:bg-red-100 whitespace-nowrap"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
                               <span>{dict.addToReturnList}</span>
@@ -343,8 +376,32 @@ export function ActionDrawers() {
                               </div>
                             </div>
                           </div>
-                          <div className="font-mono font-bold text-emerald-800 tabular-nums">
-                            {privacyHidden ? MASKED_CURRENCY : formatINR(ret.totalCostPaise)}
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono font-bold text-emerald-800 tabular-nums">
+                              {privacyHidden ? MASKED_CURRENCY : formatINR(ret.totalCostPaise)}
+                            </div>
+                            {ret.slipGenerated ? (
+                              <button
+                                type="button"
+                                onClick={() => setClearReturnTarget(ret)}
+                                className="flex min-h-[40px] items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 whitespace-nowrap"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <span>Mark as returned</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await markReturnSlipGenerated([ret.id]);
+                                  setShowSlipPreview(true);
+                                }}
+                                className="flex min-h-[40px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-[#FAF7F0] px-2.5 py-1 text-xs font-semibold text-[#0F172A] hover:bg-[#F4EFE4] whitespace-nowrap"
+                              >
+                                <Truck className="h-3.5 w-3.5" />
+                                <span>{dict.generateReturnSlip}</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -361,7 +418,7 @@ export function ActionDrawers() {
                       <button
                         type="button"
                         onClick={() => window.print()}
-                        className="flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[#0F172A] px-3 py-1.5 text-sm font-semibold text-white"
+                        className="flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#0F172A] px-3 py-1.5 text-sm font-semibold text-white"
                       >
                         <Printer className="h-4 w-4" />
                         <span>Print Slip</span>
@@ -470,46 +527,75 @@ export function ActionDrawers() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {poDraft.map((item) => (
-                      <div
-                        key={item.productId}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-[#E5DFD3] bg-white p-3.5"
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <a
+                        href={poWhatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-h-[40px] items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="text-2xl">{item.emoji}</span>
-                          <div className="min-w-0">
-                            <div className="font-semibold text-[#0F172A] truncate">
-                              {item.productName}
-                            </div>
-                            <div className="text-xs text-[#475569] font-mono">
-                              Unit cost:{' '}
-                              {privacyHidden ? MASKED_CURRENCY : formatINR(item.unitCostPaise)}
-                            </div>
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Share PO on WhatsApp</span>
+                      </a>
+                    </div>
+
+                    {poGroups.map((group) => (
+                      <div key={group.supplierId} className="space-y-2">
+                        <div className="flex items-center justify-between rounded-lg bg-[#F4EFE4] px-3 py-2">
+                          <div className="font-bold text-[#0F172A]">{group.supplierName}</div>
+                          <div className="font-mono text-sm font-semibold text-[#0F172A] tabular-nums">
+                            {privacyHidden ? MASKED_CURRENCY : formatINR(group.subtotalPaise)}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.qty}
-                            onChange={(e) =>
-                              updatePoDraftQty(item.productId, Number(e.target.value) || 1)
-                            }
-                            className="h-10 w-20 rounded-lg border border-[#D6CFC0] px-2 text-right font-mono text-sm tabular-nums"
-                          />
-                          <div className="w-24 text-right font-mono font-bold tabular-nums">
-                            {privacyHidden ? MASKED_CURRENCY : formatINR(item.totalCostPaise)}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeFromPoDraft(item.productId)}
-                            className="h-9 w-9 rounded-lg text-[#475569] hover:bg-red-50 hover:text-red-700"
-                            aria-label="Remove item from PO"
+                        {group.items.map((item) => (
+                          <div
+                            key={item.productId}
+                            className="flex items-center justify-between gap-3 rounded-xl border border-[#E5DFD3] bg-white p-3.5"
                           >
-                            <X className="h-4 w-4 mx-auto" />
-                          </button>
-                        </div>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-2xl">{item.emoji}</span>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-[#0F172A] truncate">
+                                  {item.productName}
+                                </div>
+                                <div className="text-xs text-[#475569] font-mono">
+                                  Unit cost:{' '}
+                                  {privacyHidden
+                                    ? MASKED_CURRENCY
+                                    : formatINR(item.unitCostPaise)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.qty}
+                                onChange={(e) =>
+                                  updatePoDraftQty(
+                                    item.productId,
+                                    Math.max(1, Math.floor(Number(e.target.value) || 1))
+                                  )
+                                }
+                                className="h-10 w-20 rounded-lg border border-[#D6CFC0] px-2 text-right font-mono text-sm tabular-nums"
+                              />
+                              <div className="w-24 text-right font-mono font-bold tabular-nums">
+                                {privacyHidden
+                                  ? MASKED_CURRENCY
+                                  : formatINR(item.totalCostPaise)}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeFromPoDraft(item.productId)}
+                                className="h-10 w-10 rounded-lg text-[#475569] hover:bg-red-50 hover:text-red-700"
+                                aria-label="Remove item from PO"
+                              >
+                                <X className="h-4 w-4 mx-auto" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ))}
 
@@ -527,8 +613,49 @@ export function ActionDrawers() {
                         onClick={() => void submitPurchaseOrder()}
                         className="min-h-[44px] rounded-xl bg-emerald-700 px-5 py-2 text-base font-bold text-white hover:bg-emerald-800"
                       >
-                        Confirm Purchase Order
+                        {dict.confirmOrders.replace('{count}', String(poGroups.length))}
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {poDraft.length === 0 && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled
+                      className="min-h-[44px] w-full rounded-xl bg-emerald-700 px-5 py-2 text-base font-bold text-white opacity-45"
+                    >
+                      {dict.confirmOrders.replace('{count}', '0')}
+                    </button>
+                    <p className="text-center text-xs text-[#475569]">
+                      Add at least one draft line before confirming.
+                    </p>
+                  </div>
+                )}
+
+                {ledger.purchaseOrders.length > 0 && (
+                  <div className="border-t border-[#E5DFD3] pt-4">
+                    <h4 className="mb-2 text-sm font-bold text-[#0F172A]">
+                      Recent Purchase Orders
+                    </h4>
+                    <div className="space-y-2">
+                      {ledger.purchaseOrders.slice(0, 5).map((po) => (
+                        <div
+                          key={po.id}
+                          className="flex items-center justify-between rounded-lg border border-[#E5DFD3] bg-white px-3 py-2 text-sm"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-semibold text-[#0F172A]">{po.poNumber}</div>
+                            <div className="truncate text-xs text-[#475569]">
+                              {po.supplierName ?? 'Supplier'} · {formatShortDate(po.createdAt)}
+                            </div>
+                          </div>
+                          <div className="ml-3 shrink-0 font-mono font-bold text-[#0F172A] tabular-nums">
+                            {privacyHidden ? MASKED_CURRENCY : formatINR(po.totalCostPaise)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -565,6 +692,25 @@ export function ActionDrawers() {
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(clearReturnTarget)}
+        title="Mark supplier return as completed?"
+        description={
+          clearReturnTarget
+            ? `Remove ${clearReturnTarget.qty} × ${clearReturnTarget.productName} from the pending Supplier Return List? Stock and supplier balance were already adjusted when this item was queued.`
+            : ''
+        }
+        confirmLabel="Confirm Returned"
+        tone="neutral"
+        onCancel={() => setClearReturnTarget(null)}
+        onConfirm={() => {
+          if (!clearReturnTarget) return;
+          const target = clearReturnTarget;
+          setClearReturnTarget(null);
+          void clearReturnedItem(target.id);
+        }}
+      />
 
       <ConfirmDialog
         open={Boolean(returnTarget)}

@@ -33,6 +33,8 @@ export interface TranslationDictionary {
   parkBill: string;
   parkedBills: string;
   completeBill: string;
+  viewCart: string;
+  itemsCount: string;
   billSubtotal: string;
   itemDiscounts: string;
   overallDiscount: string;
@@ -57,9 +59,29 @@ export interface TranslationDictionary {
   recommendedPurchase: string;
   demandGrowth: string;
   addToPO: string;
+  confirmOrders: string;
   stopReordering: string;
   undo: string;
   printReceipt: string;
+  restockApiTitle: string;
+  restockApiSubtitle: string;
+  restockLoading: string;
+  restockErrorTitle: string;
+  restockErrorHint: string;
+  restockRetry: string;
+  restockEmpty: string;
+  restockSkuProduct: string;
+  restockCurrentStock: string;
+  restockAvgDailySales: string;
+  restockLeadTime: string;
+  restockSuggestedQty: string;
+  restockStatus: string;
+  restockAsOf: string;
+  restockLastUpdated: string;
+  restockShowing: string;
+  restockLoadMore: string;
+  restockLoadingMore: string;
+  restockLoadMoreError: string;
 }
 
 const en: TranslationDictionary = {
@@ -96,6 +118,8 @@ const en: TranslationDictionary = {
   parkBill: 'Park Bill',
   parkedBills: 'Parked Bills',
   completeBill: 'Complete Bill',
+  viewCart: 'View cart',
+  itemsCount: '{count} item(s)',
   billSubtotal: 'Subtotal',
   itemDiscounts: 'Item Discounts',
   overallDiscount: 'Overall Discount',
@@ -120,9 +144,30 @@ const en: TranslationDictionary = {
   recommendedPurchase: 'Recommended Purchase Value',
   demandGrowth: 'Demand Growth',
   addToPO: 'Add to Purchase Order',
+  confirmOrders: 'Confirm {count} order(s)',
   stopReordering: 'Stop Reordering',
   undo: 'Undo',
   printReceipt: 'Print A5/A4 Receipt',
+  restockApiTitle: 'Restock API Recommendations',
+  restockApiSubtitle: 'Reorder estimates based on recorded sales and supplier lead times.',
+  restockLoading: 'Loading restock recommendations…',
+  restockErrorTitle: 'Could not load restock recommendations.',
+  restockErrorHint:
+    'Start Flask by running python app.py from the backend folder, then retry.',
+  restockRetry: 'Retry',
+  restockEmpty: 'No restock recommendations found.',
+  restockSkuProduct: 'SKU / Product',
+  restockCurrentStock: 'Current Stock',
+  restockAvgDailySales: 'Avg. Daily Sales',
+  restockLeadTime: 'Supplier Lead Time (Days)',
+  restockSuggestedQty: 'Suggested Reorder Qty',
+  restockStatus: 'Status',
+  restockAsOf: 'As of',
+  restockLastUpdated: 'Last updated',
+  restockShowing: 'Showing {shown} of {total}',
+  restockLoadMore: 'Load more',
+  restockLoadingMore: 'Loading more…',
+  restockLoadMoreError: 'Could not load more recommendations.',
 };
 
 const hi: TranslationDictionary = {
@@ -159,6 +204,8 @@ const hi: TranslationDictionary = {
   parkBill: 'बिल होल्ड करें',
   parkedBills: 'होल्ड बिल',
   completeBill: 'बिल पूरा करें',
+  viewCart: 'कार्ट देखें',
+  itemsCount: '{count} आइटम',
   billSubtotal: 'उप-योग',
   itemDiscounts: 'आइटम छूट',
   overallDiscount: 'कुल छूट',
@@ -183,9 +230,29 @@ const hi: TranslationDictionary = {
   recommendedPurchase: 'सुझावित खरीद मूल्य',
   demandGrowth: 'मांग में बढ़ोतरी',
   addToPO: 'खरीद ऑर्डर में जोड़ें',
+  confirmOrders: '{count} ऑर्डर की पुष्टि करें',
   stopReordering: 'रीऑर्डर रोकें',
   undo: 'वापस लें',
   printReceipt: 'A5/A4 रसीद प्रिंट करें',
+  restockApiTitle: 'रीस्टॉक API सुझाव',
+  restockApiSubtitle: 'बिक्री और सप्लायर लीड टाइम के आधार पर ऑर्डर अनुमान।',
+  restockLoading: 'रीस्टॉक सुझाव लोड हो रहे हैं…',
+  restockErrorTitle: 'रीस्टॉक सुझाव लोड नहीं हो सके।',
+  restockErrorHint: 'backend फ़ोल्डर में python app.py चलाएं, फिर दोबारा कोशिश करें।',
+  restockRetry: 'दोबारा कोशिश करें',
+  restockEmpty: 'कोई रीस्टॉक सुझाव नहीं मिला।',
+  restockSkuProduct: 'SKU / उत्पाद',
+  restockCurrentStock: 'मौजूदा स्टॉक',
+  restockAvgDailySales: 'औसत दैनिक बिक्री',
+  restockLeadTime: 'सप्लायर लीड टाइम (दिन)',
+  restockSuggestedQty: 'सुझावित ऑर्डर मात्रा',
+  restockStatus: 'स्थिति',
+  restockAsOf: 'डेटा तारीख',
+  restockLastUpdated: 'अंतिम अपडेट',
+  restockShowing: '{total} में से {shown} दिख रहे हैं',
+  restockLoadMore: 'और दिखाएं',
+  restockLoadingMore: 'और लोड हो रहा है…',
+  restockLoadMoreError: 'और सुझाव लोड नहीं हो सके।',
 };
 
 const kn: TranslationDictionary = {
@@ -222,6 +289,8 @@ const kn: TranslationDictionary = {
   parkBill: 'ಬಿಲ್ ಹೋಲ್ಡ್ ಮಾಡಿ',
   parkedBills: 'ಹೋಲ್ಡ್ ಬಿಲ್‌ಗಳು',
   completeBill: 'ಬಿಲ್ ಪೂರ್ಣಗೊಳಿಸಿ',
+  viewCart: 'ಕಾರ್ಟ್ ನೋಡಿ',
+  itemsCount: '{count} ವಸ್ತು',
   billSubtotal: 'ಉಪ-ಮೊತ್ತ',
   itemDiscounts: 'ವಸ್ತು ರಿಯಾಯಿತಿ',
   overallDiscount: 'ಒಟ್ಟು ರಿಯಾಯಿತಿ',
@@ -246,9 +315,29 @@ const kn: TranslationDictionary = {
   recommendedPurchase: 'ಶಿಫಾರಸು ಖರೀದಿ ಮೌಲ್ಯ',
   demandGrowth: 'ಬೇಡಿಕೆ ಬೆಳವಣಿಗೆ',
   addToPO: 'ಖರೀದಿ ಆರ್ಡರ್‌ಗೆ ಸೇರಿಸಿ',
+  confirmOrders: '{count} ಆರ್ಡರ್ ದೃಢೀಕರಿಸಿ',
   stopReordering: 'ಮರುಆರ್ಡರ್ ನಿಲ್ಲಿಸಿ',
   undo: 'ರದ್ದುಪಡಿಸಿ',
   printReceipt: 'A5/A4 ರಸೀದಿ ಮುದ್ರಿಸಿ',
+  restockApiTitle: 'ರೀಸ್ಟಾಕ್ API ಶಿಫಾರಸುಗಳು',
+  restockApiSubtitle: 'ಮಾರಾಟ ಮತ್ತು ಪೂರೈಕೆದಾರರ ಸಮಯದ ಆಧಾರದ ಮೇಲೆ ಆರ್ಡರ್ ಅಂದಾಜು.',
+  restockLoading: 'ರೀಸ್ಟಾಕ್ ಶಿಫಾರಸುಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ…',
+  restockErrorTitle: 'ರೀಸ್ಟಾಕ್ ಶಿಫಾರಸುಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.',
+  restockErrorHint: 'backend ಫೋಲ್ಡರ್‌ನಲ್ಲಿ python app.py ಚಲಾಯಿಸಿ, ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+  restockRetry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
+  restockEmpty: 'ಯಾವುದೇ ರೀಸ್ಟಾಕ್ ಶಿಫಾರಸು ಸಿಗಲಿಲ್ಲ.',
+  restockSkuProduct: 'SKU / ಉತ್ಪನ್ನ',
+  restockCurrentStock: 'ಪ್ರಸ್ತುತ ಸ್ಟಾಕ್',
+  restockAvgDailySales: 'ಸರಾಸರಿ ದೈನಂದಿನ ಮಾರಾಟ',
+  restockLeadTime: 'ಪೂರೈಕೆದಾರರ ಸಮಯ (ದಿನಗಳು)',
+  restockSuggestedQty: 'ಶಿಫಾರಸು ಆರ್ಡರ್ ಪ್ರಮಾಣ',
+  restockStatus: 'ಸ್ಥಿತಿ',
+  restockAsOf: 'ದಿನಾಂಕ',
+  restockLastUpdated: 'ಕೊನೆಯ ನವೀಕರಣ',
+  restockShowing: '{total} ರಲ್ಲಿ {shown} ತೋರಿಸಲಾಗಿದೆ',
+  restockLoadMore: 'ಇನ್ನಷ್ಟು ತೋರಿಸಿ',
+  restockLoadingMore: 'ಇನ್ನಷ್ಟು ಲೋಡ್ ಆಗುತ್ತಿದೆ…',
+  restockLoadMoreError: 'ಇನ್ನಷ್ಟು ಶಿಫಾರಸುಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.',
 };
 
 const dictionaries: Record<Language, TranslationDictionary> = {

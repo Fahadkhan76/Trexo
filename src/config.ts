@@ -5,7 +5,6 @@ export const APP_CONFIG = {
   STORE_GSTIN: '29AABCS1429B1Z5',
   DEADSTOCK_DAYS: 30,
   NEAR_EXPIRY_DAYS: 14,
-  USE_MOCK: import.meta.env.VITE_USE_MOCK !== 'false',
   STORAGE_KEY: 'smart_digital_munim_ledger_v1',
   LOW_STOCK_PENALTY_DAYS_OOS: 3,
   LOW_STOCK_PENALTY_DAYS_LOW: 1.5,

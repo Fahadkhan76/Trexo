@@ -6,13 +6,27 @@ import { createSeedSuppliers } from '../data/mockSuppliers';
 import type { LedgerState } from '../types';
 
 export function createInitialLedger(now: Date = new Date()): LedgerState {
+  const products = createSeedProducts(now);
+  const sales = createSeedSales(now, products);
+  const lastSaleByProduct = new Map<string, string>();
+  for (const sale of sales) {
+    for (const item of sale.items) {
+      const prior = lastSaleByProduct.get(item.productId);
+      if (!prior || sale.createdAt > prior) lastSaleByProduct.set(item.productId, sale.createdAt);
+    }
+  }
   return {
-    products: createSeedProducts(now),
-    sales: createSeedSales(now),
+    products: products.map((product) => ({
+      ...product,
+      lastSoldAt: lastSaleByProduct.get(product.id) ?? product.lastSoldAt,
+    })),
+    sales,
     customers: createSeedCustomers(now),
     suppliers: createSeedSuppliers(now),
     supplierReturns: [],
     purchaseOrders: [],
+    parkedBills: [],
+    poDraft: [],
     seededAt: now.toISOString(),
   };
 }
@@ -38,6 +52,8 @@ export function loadLedger(): LedgerState {
       suppliers: parsed.suppliers ?? [],
       supplierReturns: parsed.supplierReturns ?? [],
       purchaseOrders: parsed.purchaseOrders ?? [],
+      parkedBills: parsed.parkedBills ?? [],
+      poDraft: parsed.poDraft ?? [],
       seededAt: parsed.seededAt ?? new Date().toISOString(),
     };
   } catch {

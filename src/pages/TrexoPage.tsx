@@ -103,7 +103,7 @@ export function TrexoPage() {
                 key={h.id}
                 type="button"
                 onClick={() => setHorizon(h.id)}
-                className={`min-h-[38px] rounded-md px-3 py-1 text-sm font-semibold transition-colors whitespace-nowrap ${
+                className={`min-h-[40px] rounded-md px-3 py-1 text-sm font-semibold transition-colors whitespace-nowrap ${
                   horizon === h.id
                     ? 'bg-[#0F172A] text-white'
                     : 'text-[#475569] hover:text-[#0F172A]'
@@ -128,7 +128,7 @@ export function TrexoPage() {
       <RestockRecommendations />
 
       {/* 3 Summary Cards */}
-      <section className="grid grid-cols-3 gap-4" aria-label="Forecast summary">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Forecast summary">
         <div className="khata-surface rounded-xl p-4">
           <div className="flex items-center justify-between text-sm text-[#475569]">
             <span className="font-semibold">{dict.expectedSales}</span>
@@ -279,7 +279,7 @@ export function TrexoPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-[#E5DFD3] text-[#475569]">
                   <th className="py-2.5 pr-3 font-semibold">Product</th>
@@ -345,7 +345,7 @@ export function TrexoPage() {
                         <button
                           type="button"
                           onClick={() => addToPoDraft(product, rec.recommendedQty)}
-                          className={`min-h-[38px] rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
+                          className={`min-h-[40px] rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap ${
                             inDraft
                               ? 'border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
                               : 'bg-[#0F172A] text-white hover:bg-slate-800'
@@ -408,11 +408,11 @@ export function TrexoPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
                     <button
                       type="button"
                       onClick={() => void applyCounterDiscount(product.id, fifteenOff)}
-                      className="flex min-h-[38px] items-center gap-1 rounded-lg bg-[#0F172A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
+                      className="flex min-h-[40px] items-center gap-1 rounded-lg bg-[#0F172A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
                     >
                       <Tag className="h-3.5 w-3.5" />
                       <span>Apply 15% Discount</span>
@@ -420,7 +420,7 @@ export function TrexoPage() {
                     <button
                       type="button"
                       onClick={() => setReturnTarget(product)}
-                      className="flex min-h-[38px] items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-50 whitespace-nowrap"
+                      className="flex min-h-[40px] items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-50 whitespace-nowrap"
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
                       <span>Return to Supplier</span>
@@ -429,7 +429,7 @@ export function TrexoPage() {
                       type="button"
                       disabled={Boolean(product.stopReordering)}
                       onClick={() => void setStopReordering(product.id, true, true)}
-                      className="flex min-h-[38px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0F172A] hover:bg-[#F4EFE4] disabled:opacity-50 whitespace-nowrap"
+                      className="flex min-h-[40px] items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-3 py-1.5 text-xs font-semibold text-[#0F172A] hover:bg-[#F4EFE4] disabled:opacity-50 whitespace-nowrap"
                     >
                       <Ban className="h-3.5 w-3.5" />
                       <span>

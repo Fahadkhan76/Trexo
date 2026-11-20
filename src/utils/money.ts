@@ -224,3 +224,32 @@ export function validateCheckout(params: {
     normalizedPayment: { cashPaise, upiPaise, creditPaise },
   };
 }
+
+export interface StockIssue {
+  productId: string;
+  name: string;
+  requested: number;
+  available: number;
+}
+
+export function findStockIssues(
+  cart: { productId: string; name: string; qty: number }[],
+  products: { id: string; stockQty: number }[]
+): StockIssue[] {
+  const stockById = new Map(products.map((p) => [p.id, p.stockQty]));
+  const issues: StockIssue[] = [];
+  for (const item of cart) {
+    if (!stockById.has(item.productId)) continue; // unknown/custom item: cannot validate
+    const available = stockById.get(item.productId) ?? 0;
+    if (item.qty > available) {
+      issues.push({ productId: item.productId, name: item.name, requested: item.qty, available });
+    }
+  }
+  return issues;
+}
+
+export function formatStockIssue(i: StockIssue): string {
+  return i.available <= 0
+    ? `${i.name} is out of stock.`
+    : `Only ${i.available} of ${i.name} in stock (requested ${i.requested}).`;
+}

@@ -135,4 +135,99 @@ describe('Integer Paise & Cart Math Utility', () => {
     });
     expect(validSplit.valid).toBe(true);
   });
+
+  it('rejects negative split payment amounts', () => {
+    const result = validateCheckout({
+      itemCount: 1,
+      totalPaise: 10000,
+      paymentMode: 'split',
+      payment: { cashPaise: -100, upiPaise: 10100, creditPaise: 0 },
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it('mentions both paid and bill totals when split payments mismatch', () => {
+    const result = validateCheckout({
+      itemCount: 1,
+      totalPaise: 50000,
+      paymentMode: 'split',
+      payment: { cashPaise: 20000, upiPaise: 25000, creditPaise: 0 },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('₹450');
+    expect(result.error).toContain('₹500');
+  });
+
+  it('leaves totals unchanged with a zero percent overall discount', () => {
+    const totals = calculateCartTotals([makeCartItem()], 'percent', 0);
+    expect(totals.overallDiscountPaise).toBe(0);
+    expect(totals.totalPaise).toBe(totals.subtotalAfterItemDiscountsPaise);
+  });
+
+  it('makes the total zero with a 100 percent overall discount', () => {
+    const totals = calculateCartTotals([makeCartItem()], 'percent', 100);
+    expect(totals.totalPaise).toBe(0);
+  });
+
+  it('clamps a flat item discount above gross to a zero net line', () => {
+    const line = calculateLineTotals(
+      makeCartItem({ qty: 1, unitPricePaise: 5000, discountType: 'flat', discountValue: 99999 })
+    );
+    expect(line.lineDiscountPaise).toBe(5000);
+    expect(line.netTotalPaise).toBe(0);
+  });
+
+  it('clamps an overall discount above subtotal to a zero total', () => {
+    const totals = calculateCartTotals([makeCartItem()], 'flat', 99999);
+    expect(totals.overallDiscountPaise).toBe(totals.subtotalAfterItemDiscountsPaise);
+    expect(totals.totalPaise).toBe(0);
+  });
+
+  it('returns all zero totals for an empty cart', () => {
+    const totals = calculateCartTotals([], 'percent', 10);
+    expect(totals.grossSubtotalPaise).toBe(0);
+    expect(totals.itemDiscountTotalPaise).toBe(0);
+    expect(totals.subtotalAfterItemDiscountsPaise).toBe(0);
+    expect(totals.overallDiscountPaise).toBe(0);
+    expect(totals.totalPaise).toBe(0);
+    expect(totals.totalCostPaise).toBe(0);
+    expect(totals.estimatedProfitPaise).toBe(0);
+    expect(totals.lineResults).toEqual({});
+  });
+
+  it('rounds 3 x 3333 at 10% item and 10% overall to explicit paise', () => {
+    // Gross: 3 × 3333 = 9999. Item discount: round(999.9) = 1000 → 8999.
+    // Overall discount: round(899.9) = 900 → 8099.
+    const item = makeCartItem({
+      qty: 3,
+      unitPricePaise: 3333,
+      discountType: 'percent',
+      discountValue: 10,
+    });
+    const totals = calculateCartTotals([item], 'percent', 10);
+
+    expect(totals.grossSubtotalPaise).toBe(9999);
+    expect(totals.lineResults['p-1'].lineDiscountPaise).toBe(1000);
+    expect(totals.subtotalAfterItemDiscountsPaise).toBe(8999);
+    expect(totals.overallDiscountPaise).toBe(900);
+    expect(totals.totalPaise).toBe(8099);
+  });
+
+  it('requires a customer for credit mode and accepts cash mode', () => {
+    const credit = validateCheckout({
+      itemCount: 1,
+      totalPaise: 5000,
+      paymentMode: 'credit',
+      payment: { cashPaise: 0, upiPaise: 0, creditPaise: 5000 },
+    });
+    expect(credit.valid).toBe(false);
+
+    const cash = validateCheckout({
+      itemCount: 1,
+      totalPaise: 5000,
+      paymentMode: 'cash',
+      payment: { cashPaise: 5000, upiPaise: 0, creditPaise: 0 },
+    });
+    expect(cash.valid).toBe(true);
+  });
 });

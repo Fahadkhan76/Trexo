@@ -184,8 +184,8 @@ export function ProductFormModal({ open, editingProduct, onClose }: ProductFormM
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="sm:col-span-2">
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Product Name *
               </label>
@@ -210,7 +210,7 @@ export function ProductFormModal({ open, editingProduct, onClose }: ProductFormM
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Category
@@ -262,7 +262,7 @@ export function ProductFormModal({ open, editingProduct, onClose }: ProductFormM
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div>
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Cost (₹) *
@@ -315,7 +315,7 @@ export function ProductFormModal({ open, editingProduct, onClose }: ProductFormM
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-[#0F172A] mb-1">
                 Supplier

@@ -96,6 +96,8 @@ export interface Sale {
   id: string;
   billNumber: string;
   createdAt: string;
+  /** True for deterministic demo history; live completed bills omit this flag. */
+  isSynthetic?: boolean;
   items: SaleLineItem[];
   grossSubtotalPaise: number;
   itemDiscountTotalPaise: number;
@@ -162,6 +164,8 @@ export interface PurchaseOrder {
   poNumber: string;
   createdAt: string;
   status: 'draft' | 'ordered';
+  supplierId?: string;
+  supplierName?: string;
   items: PurchaseOrderItem[];
   totalCostPaise: number;
 }
@@ -218,5 +222,7 @@ export interface LedgerState {
   suppliers: Supplier[];
   supplierReturns: SupplierReturnItem[];
   purchaseOrders: PurchaseOrder[];
+  parkedBills: ParkedBill[];
+  poDraft: PurchaseOrderItem[];
   seededAt: string;
 }

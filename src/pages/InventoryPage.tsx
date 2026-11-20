@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Edit3, Plus, RotateCcw, Search, X } from 'lucide-react';
+import { CheckCircle2, Edit3, Plus, RotateCcw, Search, X } from 'lucide-react';
 import { CashActionStrip } from '../components/CashActionStrip';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { HeroStrip } from '../components/HeroStrip';
@@ -15,7 +15,7 @@ import {
   isOutOfStock,
 } from '../selectors/ledgerSelectors';
 import { useMunimStore } from '../store/useMunimStore';
-import type { Product, ProductCategory } from '../types';
+import type { Product, ProductCategory, SupplierReturnItem } from '../types';
 import { formatShortDate } from '../utils/dates';
 import { formatINR, MASKED_CURRENCY, paiseToRupees, rupeesToPaise } from '../utils/money';
 
@@ -33,11 +33,14 @@ const CATEGORIES: ProductCategory[] = [
 
 export function InventoryPage() {
   const products = useMunimStore((s) => s.ledger.products);
+  const supplierReturns = useMunimStore((s) => s.ledger.supplierReturns);
   const language = useMunimStore((s) => s.language);
   const privacyHidden = useMunimStore((s) => s.privacyHidden);
   const adjustStock = useMunimStore((s) => s.adjustStock);
   const updateProduct = useMunimStore((s) => s.updateProduct);
   const returnToSupplier = useMunimStore((s) => s.returnToSupplier);
+  const markReturnSlipGenerated = useMunimStore((s) => s.markReturnSlipGenerated);
+  const clearReturnedItem = useMunimStore((s) => s.clearReturnedItem);
 
   const [activeTab, setActiveTab] = useState<InventoryTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +51,7 @@ export function InventoryPage() {
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [priceDraft, setPriceDraft] = useState('');
   const [returnTarget, setReturnTarget] = useState<Product | null>(null);
+  const [clearReturnTarget, setClearReturnTarget] = useState<SupplierReturnItem | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const dict = getDictionary(language);
@@ -175,7 +179,7 @@ export function InventoryPage() {
         </div>
 
         {/* Search, Category Filter, Sort */}
-        <div className="grid grid-cols-[1fr_auto_auto] gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto]">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#475569]" />
             <input
@@ -239,7 +243,7 @@ export function InventoryPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-[#E5DFD3] text-[#475569]">
                   <th className="py-2.5 pr-2 font-semibold">Product</th>
@@ -308,7 +312,7 @@ export function InventoryPage() {
                             type="button"
                             onClick={() => void adjustStock(product.id, -1)}
                             disabled={product.stockQty <= 0}
-                            className="h-9 w-9 rounded-lg border border-[#D6CFC0] bg-white font-bold hover:bg-[#F4EFE4] disabled:opacity-40"
+                            className="h-10 w-10 rounded-lg border border-[#D6CFC0] bg-white font-bold hover:bg-[#F4EFE4] disabled:opacity-40"
                             aria-label={`Decrease stock of ${product.name}`}
                           >
                             −
@@ -319,7 +323,7 @@ export function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => void adjustStock(product.id, 1)}
-                            className="h-9 w-9 rounded-lg border border-[#D6CFC0] bg-white font-bold hover:bg-[#F4EFE4]"
+                            className="h-10 w-10 rounded-lg border border-[#D6CFC0] bg-white font-bold hover:bg-[#F4EFE4]"
                             aria-label={`Increase stock of ${product.name}`}
                           >
                             +
@@ -343,13 +347,13 @@ export function InventoryPage() {
                                 if (e.key === 'Enter') void handleSaveInlinePrice(product);
                                 if (e.key === 'Escape') setEditingPriceId(null);
                               }}
-                              className="h-9 w-20 rounded-lg border border-[#0F172A] bg-white px-2 text-right font-mono text-sm"
+                              className="h-10 w-20 rounded-lg border border-[#0F172A] bg-white px-2 text-right font-mono text-sm"
                               autoFocus
                             />
                             <button
                               type="button"
                               onClick={() => void handleSaveInlinePrice(product)}
-                              className="h-9 rounded-lg bg-[#0F172A] px-2 text-xs font-semibold text-white"
+                              className="h-10 rounded-lg bg-[#0F172A] px-2 text-xs font-semibold text-white"
                             >
                               Save
                             </button>
@@ -361,7 +365,7 @@ export function InventoryPage() {
                               setEditingPriceId(product.id);
                               setPriceDraft(String(paiseToRupees(product.sellingPricePaise)));
                             }}
-                            className="font-semibold text-[#0F172A] hover:underline"
+                            className="inline-flex min-h-10 items-center font-semibold text-[#0F172A] hover:underline"
                             title="Click to edit selling price"
                           >
                             {formatINR(effectiveSell)}
@@ -402,7 +406,7 @@ export function InventoryPage() {
                               setEditingProduct(product);
                               setModalOpen(true);
                             }}
-                            className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-2.5 text-xs font-semibold text-[#0F172A] hover:bg-[#F4EFE4]"
+                            className="inline-flex h-10 items-center gap-1 rounded-lg border border-[#D6CFC0] bg-white px-2.5 text-xs font-semibold text-[#0F172A] hover:bg-[#F4EFE4]"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                             <span>Edit</span>
@@ -411,7 +415,7 @@ export function InventoryPage() {
                             <button
                               type="button"
                               onClick={() => setReturnTarget(product)}
-                              className="inline-flex h-9 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 text-xs font-semibold text-red-800 hover:bg-red-100"
+                              className="inline-flex h-10 items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 text-xs font-semibold text-red-800 hover:bg-red-100"
                               title="Return stock to supplier"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
@@ -429,10 +433,88 @@ export function InventoryPage() {
         )}
       </section>
 
+      {supplierReturns.length > 0 && (
+        <section className="khata-surface rounded-xl p-4 space-y-3">
+          <div>
+            <h2 className="text-lg font-bold text-[#0F172A]">
+              Supplier Returns ({supplierReturns.length})
+            </h2>
+            <p className="text-sm text-[#475569]">
+              Pending → slip generated → returned. Marking as returned removes it from this list.
+            </p>
+          </div>
+          <div className="space-y-2">
+            {supplierReturns.map((ret) => (
+              <div
+                key={ret.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5DFD3] bg-white p-3.5"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-2xl">{ret.emoji}</span>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-[#0F172A]">
+                      {ret.productName} × {ret.qty}
+                    </div>
+                    <div className="text-xs text-[#475569]">
+                      {ret.supplierName} ·{' '}
+                      {ret.slipGenerated ? 'Slip generated' : 'Pending slip'} ·{' '}
+                      {formatShortDate(ret.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono font-bold text-emerald-800 tabular-nums">
+                    {privacyHidden ? MASKED_CURRENCY : formatINR(ret.totalCostPaise)}
+                  </span>
+                  {ret.slipGenerated ? (
+                    <button
+                      type="button"
+                      onClick={() => setClearReturnTarget(ret)}
+                      className="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 whitespace-nowrap"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Mark as returned</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void markReturnSlipGenerated([ret.id])}
+                      className="flex min-h-[40px] items-center gap-1.5 rounded-lg border border-[#D6CFC0] bg-[#FAF7F0] px-3 py-1.5 text-sm font-semibold text-[#0F172A] hover:bg-[#F4EFE4] whitespace-nowrap"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      <span>{dict.generateReturnSlip}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <ProductFormModal
         open={modalOpen}
         editingProduct={editingProduct}
         onClose={() => setModalOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(clearReturnTarget)}
+        title="Mark supplier return as completed?"
+        description={
+          clearReturnTarget
+            ? `Remove ${clearReturnTarget.qty} × ${clearReturnTarget.productName} from the pending Supplier Return List? Stock and supplier balance were already adjusted when it was queued.`
+            : ''
+        }
+        confirmLabel="Confirm Returned"
+        tone="neutral"
+        onCancel={() => setClearReturnTarget(null)}
+        onConfirm={() => {
+          if (!clearReturnTarget) return;
+          const target = clearReturnTarget;
+          setClearReturnTarget(null);
+          void clearReturnedItem(target.id);
+        }}
       />
 
       <ConfirmDialog

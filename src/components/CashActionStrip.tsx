@@ -21,7 +21,7 @@ export function CashActionStrip() {
 
   return (
     <section
-      className="grid grid-cols-3 gap-3"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-3"
       aria-label="Today's Cash Action Strip"
     >
       {/* 1. Rescue Stuck Cash */}

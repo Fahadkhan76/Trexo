@@ -1,0 +1,594 @@
+{
+  "dataset": "frontend ledger payload; synthetic seed transactions are marked isSynthetic",
+  "product_count": 47,
+  "sales_count": 123,
+  "synthetic_sales_count": 123,
+  "history_start": "2026-07-22",
+  "history_end": "2026-11-18",
+  "history_days": 120,
+  "forecast_method": "SES alpha=0.3, frozen-origin 14-day holdout",
+  "validated_product_count": 47,
+  "holdout_days": 14,
+  "macro_mae": 0.7787474778127712,
+  "macro_wape": 0.2592667493908484,
+  "per_product": {
+    "prod-dead-1": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.942410008365441e-06,
+      "wape": null,
+      "actual_units": 0.0,
+      "predicted_units": 2.7193740117116176e-05
+    },
+    "prod-dead-2": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 9.580718251346584e-08,
+      "wape": null,
+      "actual_units": 0.0,
+      "predicted_units": 1.3413005551885218e-06
+    },
+    "prod-dead-3": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 2.7829869093722676e-05,
+      "wape": null,
+      "actual_units": 0.0,
+      "predicted_units": 0.00038961816731211744
+    },
+    "prod-dead-4": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 6.691553461811991e-09,
+      "wape": null,
+      "actual_units": 0.0,
+      "predicted_units": 9.368174846536787e-08
+    },
+    "prod-dead-5": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 9.038581217148203e-05,
+      "wape": null,
+      "actual_units": 0.0,
+      "predicted_units": 0.0012654013704007485
+    },
+    "prod-dead-6": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 6.9904314247387445e-06,
+      "wape": null,
+      "actual_units": 0.0,
+      "predicted_units": 9.786603994634242e-05
+    },
+    "prod-fast-1": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.6468588396301354,
+      "wape": 0.21547685752169993,
+      "actual_units": 107.0,
+      "predicted_units": 111.80391685812337
+    },
+    "prod-fast-2": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.3596220027791515,
+      "wape": 0.20917261581217717,
+      "actual_units": 91.0,
+      "predicted_units": 97.75704372764315
+    },
+    "prod-fast-3": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.4829489196734786,
+      "wape": 0.26962707630426885,
+      "actual_units": 77.0,
+      "predicted_units": 59.91775146799978
+    },
+    "prod-fast-4": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 2.357142857142857,
+      "wape": 0.1907514450867052,
+      "actual_units": 173.0,
+      "predicted_units": 165.3514189274592
+    },
+    "prod-fast-5": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 2.034692826008473,
+      "wape": 0.23738082970098853,
+      "actual_units": 120.0,
+      "predicted_units": 122.60010305116964
+    },
+    "prod-exp-1": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.879134453042428,
+      "wape": 0.2862298219207905,
+      "actual_units": 43.0,
+      "predicted_units": 37.36896472036841
+    },
+    "prod-exp-2": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.4083328201756893,
+      "wape": 0.339942404869994,
+      "actual_units": 58.0,
+      "predicted_units": 38.28334051754035
+    },
+    "prod-107": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.8280144456094002,
+      "wape": 0.19320337064219337,
+      "actual_units": 60.0,
+      "predicted_units": 53.213646082569696
+    },
+    "prod-108": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.8087947368255052,
+      "wape": 0.27617381257456275,
+      "actual_units": 41.0,
+      "predicted_units": 42.7539614029665
+    },
+    "prod-109": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.7864765277947956,
+      "wape": 0.32384327615079816,
+      "actual_units": 34.0,
+      "predicted_units": 34.925300276110036
+    },
+    "prod-110": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.1718610318876341,
+      "wape": 0.21033403136444717,
+      "actual_units": 78.0,
+      "predicted_units": 82.57880943750592
+    },
+    "prod-111": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.6042320043810938,
+      "wape": 0.21389760058414584,
+      "actual_units": 105.0,
+      "predicted_units": 87.78526357065282
+    },
+    "prod-112": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.407750115126333,
+      "wape": 0.2038750575631665,
+      "actual_units": 28.0,
+      "predicted_units": 25.60809774352387
+    },
+    "prod-113": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.8762360847613003,
+      "wape": 0.27880239060586826,
+      "actual_units": 44.0,
+      "predicted_units": 38.825772738678516
+    },
+    "prod-114": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.6428571428571429,
+      "wape": 0.2727272727272727,
+      "actual_units": 33.0,
+      "predicted_units": 39.44820784661786
+    },
+    "prod-115": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.33982825443156933,
+      "wape": 0.18298444469392194,
+      "actual_units": 26.0,
+      "predicted_units": 26.93936621314124
+    },
+    "prod-116": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.5714285714285714,
+      "wape": 0.2222222222222222,
+      "actual_units": 36.0,
+      "predicted_units": 29.414054030275125
+    },
+    "prod-117": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.9084964181519573,
+      "wape": 0.23553610840976671,
+      "actual_units": 54.0,
+      "predicted_units": 60.75816224472295
+    },
+    "prod-118": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.440365342742082,
+      "wape": 0.28007103886651596,
+      "actual_units": 72.0,
+      "predicted_units": 69.42209820563798
+    },
+    "prod-119": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.7300745349604928,
+      "wape": 0.2555260872361725,
+      "actual_units": 40.0,
+      "predicted_units": 42.38682610653207
+    },
+    "prod-120": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.211433256370535,
+      "wape": 0.23555646651649292,
+      "actual_units": 72.0,
+      "predicted_units": 55.039934410812506
+    },
+    "prod-121": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.3589643952966716,
+      "wape": 0.18612968645012604,
+      "actual_units": 27.0,
+      "predicted_units": 28.035702147814764
+    },
+    "prod-122": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.6733410034282511,
+      "wape": 0.47133870239977577,
+      "actual_units": 20.0,
+      "predicted_units": 23.987418335968606
+    },
+    "prod-123": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.0024604650754572,
+      "wape": 0.2864172757358449,
+      "actual_units": 49.0,
+      "predicted_units": 48.75887442260519
+    },
+    "prod-124": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.4336240016064331,
+      "wape": 0.21681200080321655,
+      "actual_units": 28.0,
+      "predicted_units": 27.90096956851391
+    },
+    "prod-125": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.5065876718908741,
+      "wape": 0.168862557296958,
+      "actual_units": 42.0,
+      "predicted_units": 40.088602038673585
+    },
+    "prod-126": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.5,
+      "wape": 0.3333333333333333,
+      "actual_units": 21.0,
+      "predicted_units": 17.7411012159574
+    },
+    "prod-127": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.9285714285714286,
+      "wape": 0.2765957446808511,
+      "actual_units": 47.0,
+      "predicted_units": 50.195129251223975
+    },
+    "prod-128": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.8495237391231427,
+      "wape": 0.2162424063222545,
+      "actual_units": 55.0,
+      "predicted_units": 57.563331608517
+    },
+    "prod-129": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.0010601124789158,
+      "wape": 0.3787795020190492,
+      "actual_units": 37.0,
+      "predicted_units": 22.98515842529518
+    },
+    "prod-130": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.4194014707541088,
+      "wape": 0.2024696755364663,
+      "actual_units": 29.0,
+      "predicted_units": 26.779731173219467
+    },
+    "prod-131": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.5741020559236024,
+      "wape": 0.21722780494406577,
+      "actual_units": 37.0,
+      "predicted_units": 38.36899925974348
+    },
+    "prod-132": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.8602260601603587,
+      "wape": 0.34409042406414353,
+      "actual_units": 35.0,
+      "predicted_units": 34.69784610428484
+    },
+    "prod-133": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.0111301920637217,
+      "wape": 0.372521649707687,
+      "actual_units": 38.0,
+      "predicted_units": 47.03025294074824
+    },
+    "prod-134": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.4506187523581699,
+      "wape": 0.22530937617908495,
+      "actual_units": 28.0,
+      "predicted_units": 24.76787245377987
+    },
+    "prod-135": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.5358596529473836,
+      "wape": 0.2679298264736918,
+      "actual_units": 28.0,
+      "predicted_units": 21.5809590018594
+    },
+    "prod-136": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.33497204060561264,
+      "wape": 0.16748602030280632,
+      "actual_units": 28.0,
+      "predicted_units": 28.96545199587001
+    },
+    "prod-137": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.7857142857142857,
+      "wape": 0.3142857142857143,
+      "actual_units": 35.0,
+      "predicted_units": 35.836851872652964
+    },
+    "prod-138": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 1.0,
+      "wape": 0.2916666666666667,
+      "actual_units": 48.0,
+      "predicted_units": 51.05965161499647
+    },
+    "prod-139": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.4805381336072019,
+      "wape": 0.3363766935250413,
+      "actual_units": 20.0,
+      "predicted_units": 19.092737093505782
+    },
+    "prod-140": {
+      "train_days": 106,
+      "holdout_days": 14,
+      "mae": 0.3977275587925665,
+      "wape": 0.22272743292383723,
+      "actual_units": 25.0,
+      "predicted_units": 28.662883460278586
+    }
+  },
+  "sample_recommendations": [
+    {
+      "product_id": "prod-fast-4",
+      "sku": "SKU-204",
+      "brand": "Amul",
+      "category": "Beverages & Dairy",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 4.0,
+      "average_daily_sales": 11.975,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 67.85,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-fast-5",
+      "sku": "SKU-205",
+      "brand": "Parle-G",
+      "category": "Snacks & Biscuits",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 5.0,
+      "average_daily_sales": 8.891666666666667,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 48.35,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-fast-1",
+      "sku": "SKU-201",
+      "brand": "Fortune",
+      "category": "Oils & Ghee",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 0.0,
+      "average_daily_sales": 7.941666666666666,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 47.65,
+      "status": "Out of stock in recorded data",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-fast-2",
+      "sku": "SKU-202",
+      "brand": "Toor",
+      "category": "Staples & Grains",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 0.0,
+      "average_daily_sales": 6.908333333333333,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 41.45,
+      "status": "Out of stock in recorded data",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-fast-3",
+      "sku": "SKU-203",
+      "brand": "Aashirvaad",
+      "category": "Staples & Grains",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 3.0,
+      "average_daily_sales": 5.008333333333334,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 27.05,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-exp-2",
+      "sku": "SKU-302",
+      "brand": "Mother",
+      "category": "Beverages & Dairy",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 14.0,
+      "average_daily_sales": 3.9833333333333334,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 9.9,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-exp-1",
+      "sku": "SKU-301",
+      "brand": "Amul",
+      "category": "Beverages & Dairy",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 11.0,
+      "average_daily_sales": 2.9916666666666667,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 6.95,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-113",
+      "sku": "SKU-407",
+      "brand": "Nandini",
+      "category": "Oils & Ghee",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 16.0,
+      "average_daily_sales": 2.975,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 1.85,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-118",
+      "sku": "SKU-412",
+      "brand": "Maggi",
+      "category": "Snacks & Biscuits",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 29.0,
+      "average_daily_sales": 5.016666666666667,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 1.1,
+      "status": "Possible stockout risk",
+      "dead_stock_risk": {
+        "score": 0.0,
+        "days_since_sale": 0,
+        "risk": "low"
+      }
+    },
+    {
+      "product_id": "prod-dead-1",
+      "sku": "SKU-101",
+      "brand": "Imported",
+      "category": "Oils & Ghee",
+      "region": "Kanakapura",
+      "sales_channel": "Kirana",
+      "pack_type": "Retail unit",
+      "as_of_date": "2026-11-18",
+      "current_stock": 8.0,
+      "average_daily_sales": 0.075,
+      "supplier_lead_time_days": 3.0,
+      "suggested_reorder_quantity": 0.0,
+      "status": "Dead-stock risk",
+      "dead_stock_risk": {
+        "score": 100.0,
+        "days_since_sale": 48,
+        "risk": "high"
+      }
+    }
+  ]
+}

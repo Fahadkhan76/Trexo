@@ -47,7 +47,7 @@ export function ToastContainer() {
                     toast.onUndo?.();
                     dismissToast(toast.id);
                   }}
-                  className="min-h-[36px] rounded-lg bg-[#0F172A] px-3 py-1 text-sm font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
+                  className="min-h-[40px] rounded-lg bg-[#0F172A] px-3 py-1 text-sm font-semibold text-white hover:bg-slate-800 whitespace-nowrap"
                 >
                   {toast.undoLabel}
                 </button>
@@ -55,7 +55,7 @@ export function ToastContainer() {
               <button
                 type="button"
                 onClick={() => dismissToast(toast.id)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-black/5"
+                className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-black/5"
                 aria-label="Dismiss notification"
               >
                 <X className="h-4 w-4" />
